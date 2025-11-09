@@ -1,0 +1,16 @@
+{
+  "name": "is",
+  "version": "1.0.0",
+  "description": "Functions for type handling",
+  "main": "is.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GilchristTech/is-js.git"
+  },
+  "author": "Gilchrist Pitts",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/GilchristTech/is-js/issues"
+  },
+  "homepage": "https://github.com/GilchristTech/is-js#readme"
+}
