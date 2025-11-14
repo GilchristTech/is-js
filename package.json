@@ -1,5 +1,5 @@
 {
-  "name": "is",
+  "name": "@gilchrist/is",
   "version": "1.0.0",
   "description": "Functions for type handling",
   "main": "is.js",
