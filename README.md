@@ -178,18 +178,18 @@ primitive values. They describe what something `is`!
   onto JavaScript type primitives or constructors. Many of these
   use the value to simulate more specific types.
 
-  | String                                    | Matches                               |
-  | ----------------------------------------- | ------------------------------------- |
-  | `""`, `"*"`, `"any"`                      | Matches all values                    |
-  | `"type"`                                  | A valid type descriptor value         |
-  | `"nullish"`                               | `null` and `undefined` values         |
-  | `"truthy"`                                | Any truthy value                      |
-  | `"falsey"`                                | Any falsey value                      |
-  | `"iter"`, `"iterable"`, [Symbol.iterator] | An iterable value, such as an array   |
-  | `NaN`                                     | Not a number (`Number.isNaN(x)`)      |
-  | `finite`                                  | Finite numbers (`Number.isFinite(x)`) |
-  | `int`, `integer`                          | Integers (`Number.isInteger(x)`)      |
-  | `uint`                                    | Non-negative (unsigned) integers      |
+  | String                                   | Matches                               |
+  | ---------------------------------------- | ------------------------------------- |
+  | `""`, `"*"`, `"any"`                     | Matches all values                    |
+  | `"type"`                                 | A valid type descriptor value         |
+  | `"nullish"`                              | `null` and `undefined` values         |
+  | `"truthy"`                               | Any truthy value                      |
+  | `"falsey"`                               | Any falsey value                      |
+  | `"iter"`, `"iterable"`, Symbol.iterator  | An iterable value, such as an array   |
+  | `NaN`                                    | Not a number (`Number.isNaN(x)`)      |
+  | `finite`                                 | Finite numbers (`Number.isFinite(x)`) |
+  | `int`, `integer`                         | Integers (`Number.isInteger(x)`)      |
+  | `uint`                                   | Non-negative (unsigned) integers      |
 
   ### Unions (Multiple Possible Types)
 

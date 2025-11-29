@@ -11,19 +11,25 @@ export function typeToString (type) {
   assertIs("type", type);
 
   if (Array.isArray(type)) {
-    const types = [];
+    let types = new Set();
  
-    function flatten (arr) {
-      if (arr instanceof Set) {
-        arr = Array.from(arr);
-      } else if (!Array.isArray(arr)) {
-        return arr;
+    function * flatten (arr) {
+      if (is(Symbol.iterator, arr)) {
+        for (let a of arr) {
+          for (let b of flatten(a)) {
+            yield b;
+          }
+        }
       } else {
-        return arr.map(e => flatten(e));
+        yield arr;
       }
     }
 
-    return `<${types.map((t) => typeToString(t)).join(" | ")}>`;
+    for (let type_element of flatten(type)) {
+      types.add(type_element);
+    }
+
+    return `<${Array.from(types).map((t) => typeToString(t)).join(" | ")}>`;
   } else if (typeof type === "function") {
     return type.name || "Anonymous";
   }
@@ -43,7 +49,7 @@ export function typeToString (type) {
 
     case "iterable":
     case "iter":
-    case [Symbol.iterator]:
+    case Symbol.iterator:
       return "iterable";
 
     case null:      case "null":      return "null";
@@ -117,7 +123,7 @@ export function is (type, value) {
 
     case "iterable":
     case "iter":
-    case [Symbol.iterator]:
+    case Symbol.iterator:
       if (value == null) {
         return false;
       }
@@ -159,7 +165,7 @@ export function isTypeDescriptor (value) {
     case Object:     case "object":
     case "type":
     case "nullish":
-    case [Symbol.iterator]:
+    case Symbol.iterator:
       return true;
   }
 
