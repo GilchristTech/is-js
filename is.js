@@ -29,8 +29,13 @@ export function typeToString (type) {
   }
 
   switch (type) {
-    case "type":    return "type";
-    case "nullish": return "nullish";
+    case "type":
+    case "nullish":
+    case "NaN":
+    case "uint":
+    case "int":   case "integer":
+    case "finite":
+      return type;
 
     case "":    case "*":  case "any":    return "any";
     case false: case "!":  case "falsey": return "falsey";
@@ -61,7 +66,19 @@ export function typeToString (type) {
 
 
 export function getTypeString (value) {
-  return typeToString(getTypeOf(value));
+  const type = getTypeOf(value);
+
+  if (type === Number) {
+    if (Number.isNaN(value)) {
+      return "NaN";
+    } else if (Number.isInteger(value)) {
+      return "int";
+    } else {
+      return "number";
+    }
+  }
+
+  return typeToString(type);
 }
 
 
@@ -76,6 +93,16 @@ export function is (type, value) {
     case true:      case "!!":        case "truthy": return !!value;
 
     case "nullish": return value == null;
+    case "NaN":     return Number.isNaN(value);
+
+    case "finite":
+      return Number.isFinite(value);
+
+    case "int": case "integer":
+      return Number.isInteger(value);
+
+    case "uint":
+      return Number.isInteger(value) && value >= 0;
 
     case undefined: case "undefined": return value === undefined;
     case null:      case "null":      return value === null;
@@ -120,6 +147,9 @@ export function isTypeDescriptor (value) {
     case null:       case "null":
     case undefined:  case "undefined":
     case "iterable": case "iter":
+    case "finite":
+    case "uint":
+    case "int":      case "integer":
     case Boolean:    case "boolean":
     case Number:     case "number":
     case String:     case "string":

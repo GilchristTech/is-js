@@ -174,17 +174,24 @@ primitive values. They describe what something `is`!
 
   ### Special Keywords and Values
 
-  | String                                    | Matches                              |
-  | ----------------------------------------- | ------------------------------------ |
-  | `""`, `"*"`, `"any"`                      | All values.                          |
-  | `"type"`                                  | A valid type descriptor value.       |
-  | `"nullish"`                               | `null` and `undefined` values.       |
-  | `"truthy"`                                | Any truthy value.                    |
-  | `"falsey"`                                | Any falsey value.                    |
-  | `"iter"`, `"iterable"`, [Symbol.iterator] | An iterable value, such as an array. |
+  Many type descriptors are strings which to not directly map
+  onto JavaScript type primitives or constructors. Many of these
+  use the value to simulate more specific types.
+
+  | String                                    | Matches                               |
+  | ----------------------------------------- | ------------------------------------- |
+  | `""`, `"*"`, `"any"`                      | Matches all values                    |
+  | `"type"`                                  | A valid type descriptor value         |
+  | `"nullish"`                               | `null` and `undefined` values         |
+  | `"truthy"`                                | Any truthy value                      |
+  | `"falsey"`                                | Any falsey value                      |
+  | `"iter"`, `"iterable"`, [Symbol.iterator] | An iterable value, such as an array   |
+  | `NaN`                                     | Not a number (`Number.isNaN(x)`)      |
+  | `finite`                                  | Finite numbers (`Number.isFinite(x)`) |
+  | `int`, `integer`                          | Integers (`Number.isInteger(x)`)      |
+  | `uint`                                    | Non-negative (unsigned) integers      |
 
   ### Unions (Multiple Possible Types)
-
 
   Multiple types can be matched with an `Array` or `Set`, and all
   type-relating functions will recurse through elements of the
