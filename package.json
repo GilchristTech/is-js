@@ -1,8 +1,12 @@
 {
   "name": "@gilchrist/is",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Functions for type handling",
   "main": "is.js",
+  "scripts": {
+    "test": "vitest",
+    "coverage": "vitest --coverage"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/GilchristTech/is-js.git"
@@ -12,5 +16,9 @@
   "bugs": {
     "url": "https://github.com/GilchristTech/is-js/issues"
   },
-  "homepage": "https://github.com/GilchristTech/is-js#readme"
+  "homepage": "https://github.com/GilchristTech/is-js#readme",
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.15",
+    "vitest": "^4.0.15"
+  }
 }

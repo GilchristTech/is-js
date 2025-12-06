@@ -119,7 +119,13 @@ export function is (type, value) {
     case BigInt:   case "bigint":   return typeof value == "bigint"    || value instanceof BigInt;
     case Symbol:   case "symbol":   return typeof value == "symbol"    || value instanceof Symbol;
     case Function: case "function": return typeof value === "function" || value instanceof Function;
-    case Object:   case "object":   return value instanceof Object;
+
+    case Object:
+    case "object":
+      if (value === null) {
+        return false;
+      }
+      return typeof value === "object";
 
     case "iterable":
     case "iter":
