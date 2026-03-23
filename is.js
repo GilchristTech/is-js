@@ -14,7 +14,7 @@ export function typeToString (type) {
     let types = new Set();
  
     function * flatten (arr) {
-      if (is(Symbol.iterator, arr)) {
+      if (is([Array, Set], arr)) {
         for (let a of arr) {
           for (let b of flatten(a)) {
             yield b;

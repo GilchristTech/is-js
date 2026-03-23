@@ -1,10 +1,11 @@
 {
   "name": "@gilchrist/is",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Functions for type handling",
   "main": "is.js",
   "scripts": {
-    "test": "vitest",
+    "test": "vitest run",
+    "dev": "vitest",
     "coverage": "vitest --coverage"
   },
   "repository": {
@@ -19,6 +20,6 @@
   "homepage": "https://github.com/GilchristTech/is-js#readme",
   "devDependencies": {
     "@vitest/coverage-v8": "^4.0.15",
-    "vitest": "^4.0.15"
+    "vitest": "^4.1.0"
   }
 }
