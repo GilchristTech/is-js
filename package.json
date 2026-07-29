@@ -1,23 +1,37 @@
 {
-  "name": "@gilchrist/is",
-  "version": "1.0.4",
+  "name":        "@gilchrist/is",
+  "version":     "1.0.4",
   "description": "Functions for type handling",
-  "main": "is.js",
+  "author":      "Gilchrist Pitts",
+  "license":     "MIT",
+
+  "main":        "index.js",
+  "type":        "module",
+  "sideEffects": false,
+
+  "exports": {
+    ".":     "./index.js",
+    "./is":  "./is.js",
+    "./ptr": "./ptr.js"
+  },
+
   "scripts": {
-    "test": "vitest run",
-    "dev": "vitest",
+    "test":     "vitest run",
+    "dev":      "vitest",
     "coverage": "vitest --coverage"
   },
+
+  "homepage": "https://github.com/GilchristTech/is-js#readme",
+
   "repository": {
     "type": "git",
     "url": "git+https://github.com/GilchristTech/is-js.git"
   },
-  "author": "Gilchrist Pitts",
-  "license": "MIT",
+
   "bugs": {
     "url": "https://github.com/GilchristTech/is-js/issues"
   },
-  "homepage": "https://github.com/GilchristTech/is-js#readme",
+
   "devDependencies": {
     "@vitest/coverage-v8": "^4.0.15",
     "vitest": "^4.1.0"

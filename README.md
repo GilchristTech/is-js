@@ -207,7 +207,7 @@ property in the reverenced object does not match its declared
 type.”
 
 Further documentation on the `Ptr` class is pending. In the
-meantime, see the source code in `index.js` to determine the
+meantime, see the source code in `ptr.js` to determine the
 functionality (it's fairly short).
 
 ## License
