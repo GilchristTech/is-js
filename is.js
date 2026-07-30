@@ -1,4 +1,4 @@
-export function getTypeOf (value) {
+export function describeType (value) {
   if (value === null) {
     return "null";
   }
@@ -7,12 +7,12 @@ export function getTypeOf (value) {
 }
 
 
-export function typeToString (type) {
+export function formatDescriptor (type) {
   assertIs("type", type);
 
   if (Array.isArray(type)) {
     let types = new Set();
- 
+
     function * flatten (arr) {
       if (is([Array, Set], arr)) {
         for (let a of arr) {
@@ -20,6 +20,7 @@ export function typeToString (type) {
             yield b;
           }
         }
+
       } else {
         yield arr;
       }
@@ -29,7 +30,7 @@ export function typeToString (type) {
       types.add(type_element);
     }
 
-    return `<${Array.from(types).map((t) => typeToString(t)).join(" | ")}>`;
+    return `<${Array.from(types).map((t) => formatDescriptor(t)).join(" | ")}>`;
   } else if (typeof type === "function") {
     return type.name || "Anonymous";
   }
@@ -64,15 +65,20 @@ export function typeToString (type) {
   }
 
   if (typeof type === "string") {
-    throw new TypeError(`Unknown type descriptor string: ${type}`);
-  }
+    throw new TypeError(
+      `Unknown type descriptor string: ${type}`
+    );
 
-  throw new TypeError(`Expected a type descriptor, got a ${getTypeString(type)}`);
+  } else {
+    throw new TypeError(
+      `Expected a type descriptor, got a ${describeTypeAsString(type)}`
+    );
+  }
 }
 
 
-export function getTypeString (value) {
-  const type = getTypeOf(value);
+export function describeTypeAsString (value) {
+  const type = describeType(value);
 
   if (type === Number) {
     if (Number.isNaN(value)) {
@@ -82,15 +88,17 @@ export function getTypeString (value) {
     } else {
       return "number";
     }
-  }
 
-  return typeToString(type);
+  } else {
+    return formatDescriptor(type);
+  }
 }
+
 
 
 export function is (type, value) {
   if (type === "type") {
-    return isTypeDescriptor(value);
+    return isDescriptor(value);
   }
 
   switch (type) {
@@ -146,12 +154,12 @@ export function is (type, value) {
     throw new TypeError(`Unknown type string: ${type}`);
 
   } else {
-    throw new TypeError(`Expected a type descriptor, got a ${typeToString(value)}`);
+    throw new TypeError(`Expected a type descriptor, got a ${formatDescriptor(value)}`);
   }
 }
 
 
-export function isTypeDescriptor (value) {
+export function isDescriptor (value) {
   switch (value) {
     case "":         case "*":  case "any":
     case false:      case "!":  case "falsey":
@@ -185,8 +193,7 @@ export function isTypeDescriptor (value) {
 }
 
 
-
-export function assertIs (type, value, msg) {
+export function mustBe (type, value, msg) {
   if (!msg) {
     msg = "Expected a value that is";
   }
@@ -196,9 +203,22 @@ export function assertIs (type, value, msg) {
   }
 
   const err =  new TypeError(
-      `${msg}: ${typeToString(type)}; got ${getTypeString(value)}`
+      `${msg}: ${formatDescriptor(type)}; got ${describeTypeAsString(value)}`
     );
 
   Error.captureStackTrace(err, assertIs);
   throw err;
 }
+
+/* --- Alias exports --- */
+
+export const assertIs         = mustBe;
+export const describeTypeS    = describeTypeAsString;
+
+// DEPRECATED aliases.
+// Should be removed in the next major version
+
+export const getTypeOf        = describeType;
+export const typeToString     = formatDescriptor;
+export const getTypeString    = describeTypeAsString;
+export const isTypeDescriptor = isDescriptor;

@@ -1,27 +1,27 @@
 import { describe, test, it, expect } from "vitest";
-import { is, getTypeOf, assertIs, typeToString } from "./is.js";
+import { is, describeType, assertIs, formatDescriptor } from "./is.js";
 
 
-describe("getTypeOf()", () => {
+describe("describeType()", () => {
   it("Gets primative types", () => {
-    expect(getTypeOf("test")         ).toBe(String);
-    expect(getTypeOf(1)              ).toBe(Number);
-    expect(getTypeOf(false)          ).toBe(Boolean);
-    expect(getTypeOf(undefined)      ).toBe("undefined");
-    expect(getTypeOf(null)           ).toBe("null");
-    expect(getTypeOf(Symbol.iterator)).toBe(Symbol);
-    expect(getTypeOf(BigInt(0))      ).toBe(BigInt);
-    expect(getTypeOf(() => 1)        ).toBe(Function);
+    expect(describeType("test")         ).toBe(String);
+    expect(describeType(1)              ).toBe(Number);
+    expect(describeType(false)          ).toBe(Boolean);
+    expect(describeType(undefined)      ).toBe("undefined");
+    expect(describeType(null)           ).toBe("null");
+    expect(describeType(Symbol.iterator)).toBe(Symbol);
+    expect(describeType(BigInt(0))      ).toBe(BigInt);
+    expect(describeType(() => 1)        ).toBe(Function);
   });
 
   it("Gets Object", () => {
-    expect(getTypeOf({})).toBe(Object);
+    expect(describeType({})).toBe(Object);
   });
 
   it("Gets a custom class", () => {
     class TestClass {}
-    expect(getTypeOf(new TestClass)).toBe(TestClass);
-    expect(getTypeOf(TestClass)).toBe(Function);
+    expect(describeType(new TestClass)).toBe(TestClass);
+    expect(describeType(TestClass)).toBe(Function);
   });
 });
 
@@ -37,8 +37,8 @@ describe("is()", () => {
 });
 
 
-describe("typeToString()", () => {
+describe("formatDescriptor()", () => {
   it("Can return a composite type name", () => {
-    expect(typeToString([Array, "finite"], NaN)).toBe("<Array | finite>");
+    expect(formatDescriptor([Array, "finite"], NaN)).toBe("<Array | finite>");
   });
 });

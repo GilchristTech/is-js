@@ -1,7 +1,7 @@
 import {
   is,
-  assertIs,
-  typeToString,
+  mustBe,
+  describeTypeAsString,
 } from "./is.js";
 
 export class Ptr {
@@ -10,14 +10,25 @@ export class Ptr {
   #observers = [];
 
   constructor (type, obj, property) {
-    this.#type    = assertIs("type", type);
+    this.#type    = mustBe("type", type);
     this.obj      = obj;
     this.property = property;
   }
 
-  get type () {
-    return this.#type;
+  get typeDescription () { return this.#type }
+  get descriptor      () { return this.#type }
+  get type            () { return this.#type }
+
+  get typeDescriptionAsString () {
+    return describeTypeAsString(this.#type);
   }
+
+  get typeDescriptionS () { return this.typeDescriptionAsString }
+  get descriptorS      () { return this.typeDescriptionAsString }
+  get typeS            () { return this.typeDescriptionAsString }
+
+  // DEPRECATE
+  get typeToString     () { return this.typeDescriptionAsString }
 
   get obj () {
     return this.#obj;
@@ -32,7 +43,7 @@ export class Ptr {
 
   get $ () {
     try {
-      return assertIs(this.#type, this.#obj[this.property]);
+      return mustBe(this.#type, this.#obj[this.property]);
     } catch (err) {
       Error.captureStackTrace(
           err,
@@ -44,7 +55,7 @@ export class Ptr {
 
   set $ (value) {
     try {
-      value = this.obj[this.property] = assertIs(this.#type, value);
+      value = this.obj[this.property] = mustBe(this.#type, value);
     } catch (err) {
       Error.captureStackTrace(
           err,
@@ -64,28 +75,36 @@ export class Ptr {
     return is(Array.from(arguments), this.#obj[this.property]);
   }
 
-  $assertIs (types) {
-    try {
-      if (arguments.length == 1)
-        return assertIs(types, this.$);
-      return assertIs(Array.from(arguments), this.$);
-    } catch (err) {
-      Error.captureStackTrace(err, this.$assertIs);
-      throw err;
-    }
-  }
-
   valueIs (types) {
     return this.$is(...arguments);
   }
 
-  assertValueIs (types) {
+  valueMustBe (types) {
     try {
-      return this.$assertIs(...arguments);
+      return this.$mustBe(...arguments);
     } catch (err) {
       Error.captureStackTrace(err, this.assertValueIs);
       throw err;
     }
+  }
+
+  $mustBe (types) {
+    try {
+      if (arguments.length == 1)
+        return mustBe(types, this.$);
+      return mustBe(Array.from(arguments), this.$);
+    } catch (err) {
+      Error.captureStackTrace(err, this.$mustBe);
+      throw err;
+    }
+  }
+
+  $assertIs (types) {
+    return this.$mustBe(...arguments);
+  }
+
+  assertValueIs (types) {
+    return this.valueMustBe(...arguments);
   }
 
   getValue ()  {
@@ -106,12 +125,8 @@ export class Ptr {
     }
   }
 
-  get typeToString () {
-    return typeToString(this.type);
-  }
-
   static optional (type, obj, property) {
-    assertIs([Ptr, "nullish", Object], obj);
+    mustBe([Ptr, "nullish", Object], obj);
 
     if (obj instanceof Ptr) {
       // TODO: check for compatible typing
@@ -131,7 +146,7 @@ export class Ptr {
   }
 
   observe (callback) {
-    assertIs(Function, callback);
+    mustBe(Function, callback);
     this.#observers.push(callback);
     return this;
   }
