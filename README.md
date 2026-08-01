@@ -93,11 +93,11 @@ throwing errors earlier for smoother debugging.
 `is` exports several functions for validating and reporting
 types.
 
-  ### `function is (type, value)`
+  ### `function is (desc, value)`
 
   Returns true if the value matches the type descriptor.
 
-  ### `function mustBe (type, value, msg)`
+  ### `function mustBe (desc, value, msg)`
 
   Alias: `assertIs`
 
@@ -126,7 +126,7 @@ types.
   describeType({});        // Object constructor
   ```
 
-  ### `function formatDescriptor (value)`
+  ### `function formatDescriptor (desc)`
 
   Alias: (*deprecated*): `describeTypeAsString`
 
@@ -136,17 +136,72 @@ types.
   ```javascript
   ```
 
-  ### `function formatDescriptor (type)`
+  ### `function formatDescriptor (desc)`
 
   Alias (*deprecated*): `typeToString`
 
   Returns a type descriptor in stringified form.
 
-  ### `function isDescriptor (type)`
+  ### `function isDescriptor (desc)`
 
   Alias (*deprecated*): `isTypeDescriptor`
 
   Returns true if `type` is a valid type descriptor.
+
+  ### `function when (desc, value, then?, otherwise?)`
+
+  Returns `value` if `is(desc, value)`, otherwise returns
+  `undefined`.
+
+  If `then` or `otherwise` are defined, those values are used in
+  place of `value`. If the respective argument is a function, it
+  is lazily called with `value` as a parameter, and the result is
+  returned by `when`.
+
+  This function is recommended for use with nullish coalescing
+  and `pick()`.
+
+  Example:
+
+  ```javascript
+  // Basic form
+  const date = when(Date, value);
+  // ...equivalent to:
+  const date = is(Date, value) ? value : undefined;
+
+  // Using an `otherwise` value
+  const date = when(Date, value, undefined, () => new Date());
+  // ...equivalent to:
+  const date = is(Date, value) ? value : new Date();
+  ```
+
+  ### `function pick (desc, ...candidates)`
+
+  Pick the first candidate (evaluating from left to right), which
+  matches the type descriptor. Each non-function argument is used
+  as an immediate value. If candidates are functions, they are
+  lazily called with the value of the previous candidate as an
+  argument.
+
+  Throws a TypeError if no candidate was found, unless the final
+  argument is an immediate nullish value, in which case it is returned.
+
+  Example:
+
+  ```javascript
+  // Pick a positive port
+  const port = pick("uint",
+      process.env.PORT,   // First try the environment variable string...
+
+      Number.parseInt,    // Here, parseInt(process.env.PORT) would be called.
+                          // This function returns NaN when an invalid
+                          // string is provided, which would not
+                          // match the type descriptor.
+
+      8080,               // If that fails, use 8080
+    );
+  ```
+
 
 ## Descriptors
 

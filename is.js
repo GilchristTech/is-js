@@ -127,12 +127,17 @@ export function describeTypeAsString (value) {
 
 
 
-export function is (type, value) {
-  if (type === "type") {
-    return isDescriptor(value);
+export function is (desc, value) {
+  if (arguments.length !== 2) {
+    throw new TypeError(
+      `is(desc, val) expects 2 arguments, got ${arguments.length}`
+    );
   }
 
-  switch (type) {
+  switch (desc) {
+    case "type":    case "descriptor":
+      return isDescriptor(value);
+
     case "":        case "*":         case "any":    return true;
     case false:     case "!":         case "falsey": return !value;
     case true:      case "!!":        case "truthy": return !!value;
@@ -172,17 +177,17 @@ export function is (type, value) {
       if (value == null) {
         return false;
       }
-      return typeof value[Symbol.iterator] === "function";
+      return typeof value[Symbol.iterator] !== "function";
   }
 
-  if (Array.isArray(type)) {
-    return type.some((t) => is(t, value));
+  if (Array.isArray(desc)) {
+    return desc.some((t) => is(t, value));
 
-  } else if (typeof type === "function") {
-    return value instanceof type;
+  } else if (typeof desc === "function") {
+    return value instanceof desc;
   
-  } else if (typeof type === "string") {
-    throw new TypeError(`Unknown type string: ${type}`);
+  } else if (typeof desc === "string") {
+    throw new TypeError(`Unknown type descriptor string: ${desc}`);
 
   } else {
     throw new TypeError(`Expected a type descriptor, got a ${formatDescriptor(value)}`);
@@ -190,7 +195,7 @@ export function is (type, value) {
 }
 
 
-export function isDescriptor (dsc) {
+export function isDescriptor (desc) {
   // benchmark: Previously, this if block was one unified switch
   // statement containing all the builtin descriptors. However,
   // it was almost twice as fast (and much shorter) to check for
@@ -198,11 +203,11 @@ export function isDescriptor (dsc) {
   // before checking a switch of the descriptor constructor and
   // primative values.
   //
-  if (typeof dsc === "string") {
-    return descriptors.has(dsc);
+  if (typeof desc === "string") {
+    return descriptors.has(desc);
 
   } else {
-    switch (dsc) {
+    switch (desc) {
       case false:   case true:     case null:   case undefined:
       case Boolean: case Number:   case String: case BigInt:
       case Symbol:  case Function: case Object:
@@ -210,14 +215,18 @@ export function isDescriptor (dsc) {
     }
   }
 
-  if (Array.isArray(dsc)) {
-    return dsc.every(t => is("type", t));
+  if (Array.isArray(desc)) {
+    return desc.every(t => is("type", t));
 
-  } else if (dsc instanceof Set) {
-    return Array.from(dsc).every(t => is("type", t));
+  } else if (desc instanceof Set) {
+    for (let d of desc) if (!isDescriptor(d)) {
+      return false;
+    }
+
+    return true;
 
   } else {
-    return typeof dsc === "function";
+    return typeof desc === "function";
   }
 }
 
@@ -245,6 +254,82 @@ export function mustBe (type, value, msg) {
 
   Error.captureStackTrace(err, assertIs);
   throw err;
+}
+
+
+export function pick (desc, ...candidates) {
+  if (arguments.length < 2) {
+    throw new TypeError(
+      "pick() expects two or more arguments, got " + arguments.length
+    );
+
+  } else if (! isDescriptor(desc)){
+      throw new TypeError(
+        "pick() expects a type descriptor as the first argument, got " +
+        describeTypeS(desc)
+      );
+  }
+
+  let last_candidate;
+
+  for (let candidate of candidates) {
+    if (is(desc, candidate)) {
+      return candidate;
+
+    } else if (is(Function, candidate)) {
+      candidate = candidate(last_candidate);
+      if (is(desc, candidate)) {
+        return candidate;
+      }
+    }
+
+    last_candidate = candidate;
+  }
+
+  const last_arg = candidates[candidates.length - 1];
+
+  if (last_arg == undefined) {
+    return last_arg;
+
+  } else {
+    const err = new TypeError(
+      `No candidates were a ${formatDescriptor(desc)}`
+    );
+
+    Error.captureStackTrace(err);
+    throw err;
+  }
+}
+
+
+export function when (desc, value, then, otherwise) {
+  if (arguments.length < 2 || arguments.length > 4) {
+    throw new TypeError(
+      `when(desc, value, then, otherwise) requires 2-4 arguments, got ${arguments.length}`,
+    );
+  }
+
+  if (is(desc, value)) {
+    if (arguments.length >= 3) {
+      if (is(Function, then)) { return then(value) }
+      else                    { return then        }
+
+    } else {
+      return value;
+    }
+
+  } else {
+    if (arguments.length >= 4) {
+      if (is(Function, otherwise)) { return otherwise(value) }
+      else                         { return otherwise        }
+
+    } else {
+      return undefined;
+    }
+
+    // ^ implicit: If the otherwise argument was not
+    // provided, return undefined.
+  }
 }
 
 
