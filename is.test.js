@@ -5,6 +5,8 @@ import {
   pick,
   when,
 
+  descriptors,
+
   describeType,
   describeTypeS,
   assertIs,
@@ -49,6 +51,19 @@ describe("is()", () => {
 
 
 describe("formatDescriptor()", () => {
+  it("Returns a string for every builtin descriptor", () => {
+    for (let desc of descriptors) {
+      let fmt;
+
+      expect(
+        () => (fmt = formatDescriptor(desc))
+      ).not.toThrow();
+
+      expect( typeof fmt ).toBe("string");
+      expect( fmt.length ).toBeGreaterThan(0);
+    }
+  });
+
   it("Can return a composite type name", () => {
     expect(formatDescriptor([Array, "finite"], NaN)).toBe("<Array | finite>");
   });
@@ -56,14 +71,7 @@ describe("formatDescriptor()", () => {
 
 
 describe("isDescriptor", () => {
-  it("Returns true for many builtin types and related strings", () => {
-    const descriptors = [
-      String, "string",
-      Number, "integer", "uint", "number",
-      Boolean, "boolean",
-      BigInt,
-    ];
-
+  it("Returns true for every builtin types and related strings", () => {
     for (let d of descriptors) {
       let result;
 

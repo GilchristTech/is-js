@@ -1,3 +1,30 @@
+export const descriptors = new Set([
+  "",         "*",  "any",
+  false,      "!",  "falsey",
+  true,       "!!", "truthy",
+  null,       "null",
+  undefined,  "undefined",
+  "iterable", "iter",
+  "finite",
+  "uint",
+  "int",      "integer",
+  Boolean,    "boolean",
+  Number,     "number",
+  String,     "string",
+  BigInt,     "bigint",
+  Symbol,     "symbol",
+  Function,   "function",
+  Object,     "object",
+  "type",
+  "nullish",
+]);
+
+descriptors.add    = null;
+descriptors.clear  = null;
+descriptors.remove = null;
+
+
+
 export function describeType (value) {
   if (value === null) {
     return "null";
@@ -163,36 +190,34 @@ export function is (type, value) {
 }
 
 
-export function isDescriptor (value) {
-  switch (value) {
-    case "":         case "*":  case "any":
-    case false:      case "!":  case "falsey":
-    case true:       case "!!": case "truthy":
-    case null:       case "null":
-    case undefined:  case "undefined":
-    case "iterable": case "iter":
-    case "finite":
-    case "uint":
-    case "int":      case "integer":
-    case Boolean:    case "boolean":
-    case Number:     case "number":
-    case String:     case "string":
-    case BigInt:     case "bigint":
-    case Symbol:     case "symbol":
-    case Function:   case "function":
-    case Object:     case "object":
-    case "type":
-    case "nullish":
-    case Symbol.iterator:
-      return true;
+export function isDescriptor (dsc) {
+  // benchmark: Previously, this if block was one unified switch
+  // statement containing all the builtin descriptors. However,
+  // it was almost twice as fast (and much shorter) to check for
+  // strings first and whether they are in the descriptor set,
+  // before checking a switch of the descriptor constructor and
+  // primative values.
+  //
+  if (typeof dsc === "string") {
+    return descriptors.has(dsc);
+
+  } else {
+    switch (dsc) {
+      case false:   case true:     case null:   case undefined:
+      case Boolean: case Number:   case String: case BigInt:
+      case Symbol:  case Function: case Object:
+        return true;
+    }
   }
 
-  if (Array.isArray(value)) {
-    return value.every(t => is("type", t));
-  } else if (value instanceof Set) {
-    return Array.from(value).every(t => is("type", t));
+  if (Array.isArray(dsc)) {
+    return dsc.every(t => is("type", t));
+
+  } else if (dsc instanceof Set) {
+    return Array.from(dsc).every(t => is("type", t));
+
   } else {
-    return typeof value === "function";
+    return typeof dsc === "function";
   }
 }
 
