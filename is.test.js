@@ -1,5 +1,16 @@
 import { describe, test, it, expect } from "vitest";
-import { is, describeType, assertIs, formatDescriptor } from "./is.js";
+
+import {
+  is,
+  pick,
+  when,
+
+  describeType,
+  describeTypeS,
+  assertIs,
+  formatDescriptor,
+  isDescriptor,
+} from "./is.js";
 
 
 describe("describeType()", () => {
@@ -41,4 +52,37 @@ describe("formatDescriptor()", () => {
   it("Can return a composite type name", () => {
     expect(formatDescriptor([Array, "finite"], NaN)).toBe("<Array | finite>");
   });
+});
+
+
+describe("isDescriptor", () => {
+  it("Returns true for many builtin types and related strings", () => {
+    const descriptors = [
+      String, "string",
+      Number, "integer", "uint", "number",
+      Boolean, "boolean",
+      BigInt,
+    ];
+
+    for (let d of descriptors) {
+      let result;
+
+      expect(
+        () => { return result = isDescriptor(d) },
+        `Type threw error: ${formatDescriptor(d)}`,
+      ).not.toThrow();
+
+      expect(
+        result,
+        `Type returned false: ${formatDescriptor(d)}`,
+      ).toBe(true);
+    }
+  });
+
+  it("Returns true for a union type", () => {
+    expect(
+      isDescriptor([String, Number])
+    ).toBe(true);
+  });
+
 });

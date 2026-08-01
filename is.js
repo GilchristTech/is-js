@@ -7,10 +7,13 @@ export function describeType (value) {
 }
 
 
-export function formatDescriptor (type) {
-  assertIs("type", type);
+export function formatDescriptor (descriptor) {
+  assertIs("type",
+    descriptor,
+    "formatDescriptor() expects",
+  );
 
-  if (Array.isArray(type)) {
+  if (Array.isArray(descriptor)) {
     let types = new Set();
 
     function * flatten (arr) {
@@ -26,23 +29,24 @@ export function formatDescriptor (type) {
       }
     }
 
-    for (let type_element of flatten(type)) {
+    for (let type_element of flatten(descriptor)) {
       types.add(type_element);
     }
 
     return `<${Array.from(types).map((t) => formatDescriptor(t)).join(" | ")}>`;
-  } else if (typeof type === "function") {
-    return type.name || "Anonymous";
+
+  } else if (typeof descriptor === "function") {
+    return descriptor.name || "Anonymous";
   }
 
-  switch (type) {
+  switch (descriptor) {
     case "type":
     case "nullish":
     case "NaN":
     case "uint":
     case "int":   case "integer":
     case "finite":
-      return type;
+      return descriptor;
 
     case "":    case "*":  case "any":    return "any";
     case false: case "!":  case "falsey": return "falsey";
@@ -64,14 +68,14 @@ export function formatDescriptor (type) {
     case Object:    case "object":    return "object";
   }
 
-  if (typeof type === "string") {
+  if (typeof descriptor === "string") {
     throw new TypeError(
-      `Unknown type descriptor string: ${type}`
+      `Unknown type descriptor string: ${descriptor}`
     );
 
   } else {
     throw new TypeError(
-      `Expected a type descriptor, got a ${describeTypeAsString(type)}`
+      `Expected a type descriptor, got a ${describeTypeAsString(descriptor)}`
     );
   }
 }
@@ -198,17 +202,26 @@ export function mustBe (type, value, msg) {
     msg = "Expected a value that is";
   }
 
+  let err;
+
   if (is(type, value)) {
     return value;
-  }
 
-  const err =  new TypeError(
-      `${msg}: ${formatDescriptor(type)}; got ${describeTypeAsString(value)}`
-    );
+  } if (is(String, value)) {
+    err =  new TypeError(
+        `${msg}: ${formatDescriptor(type)}; got string with value "${value}"}`
+      );
+
+  } else {
+    err =  new TypeError(
+        `${msg}: ${formatDescriptor(type)}; got ${describeTypeAsString(value)}`
+      );
+  }
 
   Error.captureStackTrace(err, assertIs);
   throw err;
 }
+
 
 /* --- Alias exports --- */
 
