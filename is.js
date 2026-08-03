@@ -138,9 +138,9 @@ export function is (desc, value) {
     case "type":    case "descriptor":
       return isDescriptor(value);
 
-    case "*":       case "any":    return true;
-    case false:     case "!":         case "falsey": return !value;
-    case true:      case "!!":        case "truthy": return !!value;
+    case "*":  case "any":    return true;
+    case "!":  case "falsey": return !value;
+    case "!!": case "truthy": return !!value;
 
     case "nullish": return value == null;
     case "NaN":     return Number.isNaN(value);
@@ -154,8 +154,12 @@ export function is (desc, value) {
     case "uint":
       return Number.isInteger(value) && value >= 0;
 
-    case undefined: case "undefined": return value === undefined;
-    case null:      case "null":      return value === null;
+    case "undefined": return value === undefined;
+    case "null":      return value === null;
+
+    case undefined: case null:
+    case true:      case false:
+      return value === type
 
     case Boolean:  case "boolean":  return typeof value == "boolean"   || value instanceof Boolean;
     case Number:   case "number":   return typeof value == "number"    || value instanceof Number;
