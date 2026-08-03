@@ -1,5 +1,5 @@
 export const descriptors = new Set([
-  "",         "*",  "any",
+  "*",        "any",
   false,      "!",  "falsey",
   true,       "!!", "truthy",
   null,       "null",
@@ -75,7 +75,7 @@ export function formatDescriptor (descriptor) {
     case "finite":
       return descriptor;
 
-    case "":    case "*":  case "any":    return "any";
+    case "*":   case "any":    return "any";
     case false: case "!":  case "falsey": return "falsey";
     case true:  case "!!": case "truthy": return "truthy";
 
@@ -138,7 +138,7 @@ export function is (desc, value) {
     case "type":    case "descriptor":
       return isDescriptor(value);
 
-    case "":        case "*":         case "any":    return true;
+    case "*":       case "any":    return true;
     case false:     case "!":         case "falsey": return !value;
     case true:      case "!!":        case "truthy": return !!value;
 
