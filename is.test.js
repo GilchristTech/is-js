@@ -14,6 +14,11 @@ import {
   describeTypeS,
   formatDescriptor,
   isDescriptor,
+
+  Nullish, Int, Uint,
+  Truthy, Falsey,
+  Iterable,
+  Finite,
 } from "./is.js";
 
 
@@ -181,5 +186,77 @@ describe("when()", () => {
     expect(when(Symbol, 999)).toBe(undefined);
     expect(when(Symbol, 999, "number!")).toBe(undefined);
     expect(when(Symbol, 999, "number!", ">_<")).toBe(">_<");
+  });
+});
+
+  Nullish, Int, Uint,
+  Truthy, Falsey,
+  Iterable,
+  Finite,
+
+describe("Type descriptor functions", () => {
+  it("asserts and returns for Nullish()", () => {
+    expect(Nullish(null)     ).toBe(null);
+    expect(Nullish(undefined)).toBe(null);
+    expect(() => Nullish(true)).toThrow();
+  });
+
+  it("asserts, rounds, converts, and returns for Int", () => {
+    expect(Int( 10 )).toBe(10);
+    expect(Int("-10")).toBe(-10);
+    expect(() => Int("error!")).toThrow();
+    expect(() => Int(NaN)).toThrow();
+    expect(Int(12.34)).toBe(12);
+    expect(Int(-12.34)).toBe(-12);
+  });
+
+  it("asserts, rounds, converts, and returns for Int", () => {
+    expect(Uint( 10 )).toBe(10);
+    expect(Uint("10")).toBe(10);
+    expect(() => Uint("-10")).toThrow();
+    expect(() => Uint("error!")).toThrow();
+    expect(() => Uint(NaN)).toThrow();
+    expect(Uint(12.34)).toBe(12);
+  });
+
+  it("asserts, converts, and returns for Finite", () => {
+    expect(Finite( 10 )).toBe(10);
+    expect(() => Finite("error!")).toThrow();
+    expect(() => Finite(NaN)).toThrow();
+    expect(Finite(12.34)).toBe(12.34);
+    expect(Finite("-12.34")).toBe(-12.34);
+  });
+
+  it("asserts and returns for Truthy()", () => {
+    expect(Truthy(true)  ).toBe(true);
+    expect(Truthy(1)     ).toBe(true);
+    expect(Truthy("asdf")).toBe(true);
+
+    expect(() => Truthy(false)).toThrow();
+    expect(() => Truthy(0)    ).toThrow();
+    expect(() => Truthy(null) ).toThrow();
+  });
+
+
+  it("asserts and returns for Falsey()", () => {
+    expect(() => Falsey(true)  ).toThrow();
+    expect(() => Falsey(1)     ).toThrow();
+    expect(() => Falsey("asdf")).toThrow();
+
+    expect(Falsey(false)).toBe(false);
+    expect(Falsey(0)    ).toBe(false);
+    expect(Falsey(null) ).toBe(false);
+  });
+
+
+  it("asserts and returns for Iterable()", () => {
+    expect(() => Iterable(true)).toThrow();
+
+    const itr_arr = [1, 2, 3];
+    const itr_set = new Set(itr_arr);
+    const itr_obj = Object.fromEntries(Object.entries(itr_arr));
+
+    expect(Iterable(itr_arr)).toBe(itr_arr);
+    expect(Iterable(itr_set)).toBe(itr_set);
   });
 });

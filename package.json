@@ -1,6 +1,6 @@
 {
   "name":        "@gilchrist/is",
-  "version":     "1.3.0",
+  "version":     "1.4.0",
   "description": "Functions for type handling",
   "author":      "Gilchrist Pitts",
   "license":     "MIT",

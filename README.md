@@ -245,18 +245,18 @@ In short, they are a composite of
   onto JavaScript type primitives or constructors. Many of these
   use the value to simulate more specific types.
 
-  | String                                   | Matches                               |
-  | ---------------------------------------- | ------------------------------------- |
-  | `""`, `"*"`, `"any"`                     | Matches all values                    |
-  | `"type"`                                 | A valid type descriptor value         |
-  | `"nullish"`                              | `null` and `undefined` values         |
-  | `"truthy"`                               | Any truthy value                      |
-  | `"falsey"`                               | Any falsey value                      |
-  | `"iter"`, `"iterable"`, Symbol.iterator  | An iterable value, such as an array   |
-  | `NaN`                                    | Not a number (`Number.isNaN(x)`)      |
-  | `finite`                                 | Finite numbers (`Number.isFinite(x)`) |
-  | `int`, `integer`                         | Integers (`Number.isInteger(x)`)      |
-  | `uint`                                   | Non-negative (unsigned) integers      |
+  | Value of Descriptor       | Matches                               |
+  | ------------------------- | ------------------------------------- |
+  | `"*"`, `"any"`            | Matches all values                    |
+  | `"type"`                  | A valid type descriptor value         |
+  | Is.Nullish, `"nullish"`   | `null` and `undefined` values         |
+  | Is.Truthy, `"truthy"`     | Any truthy value                      |
+  | Is.Falsey, `"falsey"`     | Any falsey value                      |
+  | Is.Iterable, `"iter"`, `"iterable"`, Symbol.iterator  | An iterable value, such as an array |
+  | NaN, `NaN`                | Not a number (`Number.isNaN(x)`)      |
+  | Is.Finite, `finite`       | Finite numbers (`Number.isFinite(x)`) |
+  | Is.Int, `int`, `integer`  | Integers (`Number.isInteger(x)`)      |
+  | Is.Uint, `uint`           | Non-negative (unsigned) integers      |
 
   ### Unions (Multiple Possible Types)
 
@@ -264,6 +264,26 @@ In short, they are a composite of
   type-relating functions will recurse through elements of the
   union. If at least one type is matched with a value, the value
   is considered to match the union type.
+
+  ### Descriptor function exports
+
+  `is` exports several functions, and references to them can be
+  used as type descriptors. When called, they perform assertions
+  and conversions of their argument, similar to Python's
+  functions like `int` or `bool`. 
+
+  | Name          | Returns                                                                                                               |
+  | ------------- | --------------------------------------------------------------------------------------------------------------------- |
+  | Nullish(n)    | Returns `null` if the value is nullish, or throws                                                                     |
+  | Finite(n)     | Returns `n` as a number and converts strings. Throws if the value is not a finite number                              |
+  | Int(n)        | Returns `n` as an integer (rounded down), and converts strings. Throws if the value is not a finite number            |
+  | Uint(n)       | Returns `n` as an unsigned integer (rounded down), and converts strings. Throws if the value is not a positive number |
+  | Truthy(t)     | Returns `true` if the value is truthy, or throws                                                                      |
+  | Falsey(f)     | Returns `false` if the value is falsey, or throws                                                                     |
+  | Iterable(itr) | Returns `itr` if the value is iterable, or throws                                                                     |
+
+    case Nullish, Int, Uint, Truthy, Falsey,
+         Iterable, Finite:
 
 ## `Ptr` Class
 
