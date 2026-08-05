@@ -21,6 +21,8 @@ import {
   Finite,
 } from "./is.js";
 
+import { desc_cases } from "./cases-is.js";
+
 
 describe("describeType()", () => {
   it("Gets primative types", () => {
@@ -48,7 +50,7 @@ describe("describeType()", () => {
 
 
 describe("is()", () => {
-  it ("checks that values are objects", () => {
+  it("checks that values are objects", () => {
     expect(is(Object,  {})).toBe(true);
     expect(is([Object, String], new Object)).toBe(true);
     expect(is(Object,  null)).toBe(false);
@@ -56,9 +58,26 @@ describe("is()", () => {
     expect(is(Object,  0)).toBe(false);
   });
 
+  it("matches types in all test cases", () => {
+    for (let [desc, case_entries] of desc_cases)
+    for (let case_entry of case_entries) {
+      const { value, error } = case_entry;
+
+      if (!is(desc, value)) {
+        console.log(value);
+        throw new Error(
+          `${value?.toString() ?? value} is a ${describeTypeS(value)}, not a ${formatDescriptor(desc)}`,
+          { cause: error },
+        );
+      }
+    }
+  });
+
   it("throws when not given a descriptor", () => {
-    expect(() => is()            ).toThrow();
-    expect(() => is("not a type")).toThrow();
+    expect(() => is()               ).toThrow();
+    expect(() => is("not a type")   ).toThrow();
+    expect(() => is("not a type", 1)).toThrow();
+    expect(() => is(BigInt(1234), 1)).toThrow(/expect.*BigInt/i);
   });
 });
 

@@ -41,6 +41,7 @@ export function formatDescriptor (descriptor) {
 
   switch (descriptor) {
     case "type":
+    case "descriptor":
     case "nullish":
     case NaN: case "NaN":
     case "uint":
@@ -57,41 +58,57 @@ export function formatDescriptor (descriptor) {
     case Symbol.iterator:
       return "iterable";
 
-    case null:      case "null":      return "null";
-    case undefined: case "undefined": return "undefined";
-    case Boolean:   case "boolean":   return "boolean";
-    case Number:    case "number":    return "number";
-    case String:    case "string":    return "string";
-    case BigInt:    case "bigint":    return "bigint";
-    case Symbol:    case "symbol":    return "symbol";
-    case Function:  case "function":  return "function";
-    case Object:    case "object":    return "object";
+    case null:      return "null";
+    case undefined: return "undefined";
+    case Boolean:   return "boolean";
+    case Number:    return "number";
+    case String:    return "string";
+    case BigInt:    return "bigint";
+    case Symbol:    return "symbol";
+    case Function:  return "function";
+    case Object:    return "object";
 
-    case Nullish, Int, Uint, Truthy, Falsey,
-         Iterable, Finite:
+    case "null":
+    case "undefined":
+    case "boolean":
+    case "number":
+    case "string":
+    case "bigint":
+    case "symbol":
+    case "function":
+    case "object":
+      return descriptor;
+
+
+    case Iterable:
+    case Nullish: case Truthy: case Falsey:
+    case Finite:  case Int:    case Uint: 
       return descriptor.constructor.name.toLowerCase()
   }
 
-  if (typeof descriptor === "string") {
-    throw new TypeError(
-      `Unknown type descriptor string: ${descriptor}`
-    );
+  if (typeof descriptor !== "string") {
+    if (Number.isNaN(descriptor)) {
+      return "NaN";
 
-  } else if (Number.isNaN(descriptor)) {
-    return "NaN";
+    } else {
+      throw new TypeError(
+        `Expected a type descriptor, got a ${describeTypeAsString(descriptor)}`
+      );
+    }
 
   } else {
     throw new TypeError(
-      `Expected a type descriptor, got a ${describeTypeAsString(descriptor)}`
+      `Unknown type descriptor string: ${descriptor}`
     );
   }
+
 }
 
 
 export function describeTypeAsString (value) {
-  const type = describeType(value);
+  const desc = describeType(value);
 
-  if (type === Number) {
+  if (desc === Number) {
     if (Number.isNaN(value)) {
       return "NaN";
     } else if (Number.isInteger(value)) {
@@ -101,7 +118,7 @@ export function describeTypeAsString (value) {
     }
 
   } else {
-    return formatDescriptor(type);
+    return formatDescriptor(desc);
   }
 }
 
@@ -115,12 +132,12 @@ export function is (desc, value) {
   }
 
   switch (desc) {
-    case "type":    case "descriptor":
+    case "type": case "descriptor":
       return isDescriptor(value);
 
-    case "*":    case "any":    return true;
-    case Truthy: case "!":  case "falsey": return ! value;
-    case Falsey: case "!!": case "truthy": return !!value;
+    case "*":    case "any":               return true;
+    case Falsey: case "!":  case "falsey": return !value  || value == false;
+    case Truthy: case "!!": case "truthy": return !!value || value == true;;
 
     case Nullish: case "nullish":
       return value == null;
@@ -129,13 +146,16 @@ export function is (desc, value) {
       return Number.isNaN(value);
 
     case Finite: case "finite":
-      return Number.isFinite(value);
+      return Number.isFinite(value) || value instanceof Number && Number.isFinite(value+0);
 
     case Int: case "int": case "integer":
-      return Number.isInteger(value);
+      return Number.isInteger(value) || value instanceof Number && Number.isInteger(value+0);
 
     case Uint: case "uint":
-      return Number.isInteger(value) && value >= 0;
+      return (
+          Number.isInteger(value) ||
+          ( value instanceof Number && Number.isInteger(value+1) )
+        ) && value >= 0;
 
     case "undefined": return value === undefined;
     case "null":      return value === null;
@@ -163,27 +183,27 @@ export function is (desc, value) {
     case "iterable":
     case "iter":
     case Symbol.iterator:
-      if (value == null) {
-        return false;
-      }
       return !(typeof value[Symbol.iterator] !== "function");
   }
 
-  if (Array.isArray(desc)) {
-    return desc.some((t) => is(t, value));
+  if (typeof desc !== "function") {
+    if (Array.isArray(desc)) {
+      return desc.some((t) => is(t, value));
 
-  } else if (typeof desc === "function") {
-    return value instanceof desc;
-  
-  } else if (typeof desc === "string") {
-    throw new TypeError(`Unknown type descriptor string: ${desc}`);
+    } else if (typeof desc === "string") {
+      throw new TypeError(`Unknown type descriptor string: ${desc}`);
 
-  } else if (Number.isNaN(desc)) {
-    return Number.isNaN(value);
+    } else if (Number.isNaN(desc)) {
+      return Number.isNaN(value);
+
+    } else {
+      throw new TypeError(`Expected a type descriptor, got a ${formatDescriptor(desc)}`);
+    }
 
   } else {
-    throw new TypeError(`Expected a type descriptor, got a ${formatDescriptor(desc)}`);
+    return value instanceof desc;
   }
+
 }
 
 
@@ -203,6 +223,7 @@ export function isDescriptor (desc) {
       case false:   case true:     case null:   case undefined:
       case Boolean: case Number:   case String: case BigInt:
       case Symbol:  case Function: case Object:
+      case Symbol.iterator:
         return true;
     }
   }
@@ -377,14 +398,14 @@ export function Uint (n) {
 
 export const descriptors = new Set([
   "*",        "any",
-  false,      "!",  "falsey",
-  true,       "!!", "truthy",
+  false,      true,
+  "!",        "falsey",
+  "!!",       "truthy",
   null,       "null",
   undefined,  "undefined",
   "iterable", "iter",
-  NaN, "NaN",
-  "finite",
-  "uint",
+  NaN,        "NaN",
+  "finite",   "uint",
   "int",      "integer",
   Boolean,    "boolean",
   Number,     "number",
@@ -393,7 +414,7 @@ export const descriptors = new Set([
   Symbol,     "symbol",
   Function,   "function",
   Object,     "object",
-  "type",
+  "type",     "descriptor",
   "nullish",
 
   Nullish, Int, Uint,
