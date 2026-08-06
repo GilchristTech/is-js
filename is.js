@@ -8,98 +8,101 @@ export function describeType (value) {
 
 
 export function formatDescriptor (descriptor) {
-  assertIs("type",
-    descriptor,
-    "formatDescriptor() expects",
-  );
+  if (typeof descriptor !== "string") {
+    switch (descriptor) {
+      case Iterable:
+      case Symbol.iterator:
+        return "iterable";
 
-  if (Array.isArray(descriptor)) {
-    let types = new Set();
+      case null:      return "null";
+      case true:      return "true";
+      case false:     return "false";
+      case undefined: return "undefined";
+      case Boolean:   return "boolean";
+      case Number:    return "number";
+      case String:    return "string";
+      case BigInt:    return "bigint";
+      case Symbol:    return "symbol";
+      case Function:  return "function";
+      case Object:    return "object";
 
-    function * flatten (arr) {
-      if (is([Array, Set], arr)) {
-        for (let a of arr) {
-          for (let b of flatten(a)) {
-            yield b;
+      case Nullish: case Truthy: case Falsey:
+      case Finite:  case Int:    case Uint: 
+        return descriptor.constructor.name.toLowerCase()
+    }
+
+    switch ((typeof descriptor)[0]) {
+      case "f" /*function*/:
+        return descriptor.name || "Anonymous";
+
+      /*
+        Cases that are implicitly discluded by previous checks:
+        case "b": // boolean
+        case "s": // string
+        case "u": // undefined
+      */
+
+      case "n" /*number*/:
+        if (Number.isNaN(descriptor)) {
+          return "NaN";
+        }
+      case "s" /*symbol*/:
+        // typeof "string" and Symbol.iterator have been
+        // implicitly discluded.
+      case "b" /*bigint*/:
+        break;
+
+      case "o" /*object*/:
+        if (Array.isArray(descriptor)) {
+          let types = new Set();
+
+          function * flatten (arr) {
+            if (is([Array, Set], arr)) {
+              for (let a of arr) {
+                for (let b of flatten(a)) {
+                  yield b;
+                }
+              }
+
+            } else {
+              yield arr;
+            }
           }
+
+          for (let type_element of flatten(descriptor)) {
+            types.add(type_element);
+          }
+
+          return `<${Array.from(types).map((t) => formatDescriptor(t)).join(" | ")}>`;
         }
 
-      } else {
-        yield arr;
-      }
     }
 
-    for (let type_element of flatten(descriptor)) {
-      types.add(type_element);
-    }
-
-    return `<${Array.from(types).map((t) => formatDescriptor(t)).join(" | ")}>`;
-
-  } else if (typeof descriptor === "function") {
-    return descriptor.name || "Anonymous";
-  }
-
-  switch (descriptor) {
-    case "type":
-    case "descriptor":
-    case "nullish":
-    case NaN: case "NaN":
-    case "uint":
-    case "int":   case "integer":
-    case "finite":
-      return descriptor;
-
-    case "*":   case "any":    return "any";
-    case false: case "!":  case "falsey": return "falsey";
-    case true:  case "!!": case "truthy": return "truthy";
-
-    case "iterable":
-    case "iter":
-    case Symbol.iterator:
-      return "iterable";
-
-    case null:      return "null";
-    case undefined: return "undefined";
-    case Boolean:   return "boolean";
-    case Number:    return "number";
-    case String:    return "string";
-    case BigInt:    return "bigint";
-    case Symbol:    return "symbol";
-    case Function:  return "function";
-    case Object:    return "object";
-
-    case "null":
-    case "undefined":
-    case "boolean":
-    case "number":
-    case "string":
-    case "bigint":
-    case "symbol":
-    case "function":
-    case "object":
-      return descriptor;
-
-
-    case Iterable:
-    case Nullish: case Truthy: case Falsey:
-    case Finite:  case Int:    case Uint: 
-      return descriptor.constructor.name.toLowerCase()
-  }
-
-  if (typeof descriptor !== "string") {
-    if (Number.isNaN(descriptor)) {
-      return "NaN";
-
-    } else {
-      throw new TypeError(
-        `Expected a type descriptor, got a ${describeTypeAsString(descriptor)}`
-      );
-    }
-
-  } else {
     throw new TypeError(
-      `Unknown type descriptor string: ${descriptor}`
+      `Expected a type descriptor, got a ${describeTypeAsString(descriptor)}`
     );
+
+  } else /* typeof descriptor === "string" */ {
+    switch (descriptor) {
+      default:
+        throw new TypeError(
+          `Unknown type descriptor string: ${descriptor}`
+        );
+
+      case "undefined": case "null":       case "boolean":
+      case "number":    case "bigint":     case "string":
+      case "symbol":    case "object":     case "function":
+
+      case "type":      case "descriptor": case "nullish":
+      case "uint":      case "int":        case "integer":
+      case "finite":    case "iterable":   case "iter":
+      case "NaN":       case "any":
+        return descriptor;
+
+      case "*":  return "any";
+      case "!":  case "falsey": return "falsey";
+      case "!!": case "truthy": return "truthy";
+    }
   }
 
 }
@@ -111,8 +114,10 @@ export function describeTypeAsString (value) {
   if (desc === Number) {
     if (Number.isNaN(value)) {
       return "NaN";
+
     } else if (Number.isInteger(value)) {
       return "int";
+
     } else {
       return "number";
     }
@@ -168,7 +173,7 @@ export function is (desc, value) {
 
     case Number:   case "number":   return typeof value == "number"    || value instanceof Number;
     case String:   case "string":   return typeof value == "string"    || value instanceof String;
-    case BigInt:   case "bigint":   return typeof value == "bigint"    || value instanceof BigInt;
+    case BigInt:   case "bigint":   return typeof value == "bigint";
     case Symbol:   case "symbol":   return typeof value == "symbol"    || value instanceof Symbol;
     case Function: case "function": return typeof value === "function" || value instanceof Function;
 

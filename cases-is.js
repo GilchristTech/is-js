@@ -59,9 +59,13 @@ class ExtBoolean extends Boolean {}
 
 export const desc_cases = new Map;
 
-cases(desc_cases, false,   false      );
-cases(desc_cases, true,    true       );
-cases(desc_cases, Boolean, true, false);
+cases(desc_cases, false, false);
+cases(desc_cases,  true,  true);
+
+cases(desc_cases, [Boolean, "boolean"], true, false, new Boolean(true), new Boolean(false));
+
+cases(desc_cases, true,  true );
+cases(desc_cases, false, false);
 
 cases(desc_cases,
   [Iterable, "iterable", "iter", Symbol.iterator],
@@ -124,6 +128,8 @@ cases(desc_cases, [Function, "function"],
   () => {},
   (class {}),
 );
+
+cases(desc_cases, [Nullish, "nullish"], null, undefined);
 
 cases(desc_cases, [Object, "object"], {});
 

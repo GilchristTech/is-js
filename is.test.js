@@ -8,9 +8,8 @@ import {
 
   descriptors,
 
-  descriptors,
-
   describeType,
+  describeTypeAsString,
   describeTypeS,
   formatDescriptor,
   isDescriptor,
@@ -64,7 +63,6 @@ describe("is()", () => {
       const { value, error } = case_entry;
 
       if (!is(desc, value)) {
-        console.log(value);
         throw new Error(
           `${value?.toString() ?? value} is a ${describeTypeS(value)}, not a ${formatDescriptor(desc)}`,
           { cause: error },
@@ -94,6 +92,10 @@ describe("mustBe()", () => {
   it("includes invalid string values in errors messages", () => {
     expect(() => mustBe(Number, "my string")).toThrow("my string");
   });
+
+  it("uses custom error messages", () => {
+    expect(() => mustBe(Number, "error!", "whoopsie!")).toThrow(/whoopsie!/);
+  });
 });
 
 
@@ -113,6 +115,31 @@ describe("formatDescriptor()", () => {
 
   it("Can return a composite type name", () => {
     expect(formatDescriptor([Array, "finite"], NaN)).toBe("<Array | finite>");
+  });
+
+  it("throws an error if it receives an invalid descriptor", () => {
+    expect(() => formatDescriptor("not-a-type")).toThrow();
+    expect(() => formatDescriptor(new Number)  ).toThrow();
+    expect(() => formatDescriptor(0)).toThrow();
+  });
+
+  it("handles classes, functions, and anonymous functions", () => {
+    class MyClass {}
+    function fn() {}
+
+    expect(formatDescriptor(MyClass)).toBe("MyClass");
+    expect(formatDescriptor(function () {})).toMatch(/Anonymous/i);
+    expect(formatDescriptor(() => {})).toMatch(/Anonymous/i);
+    expect(formatDescriptor(fn)).toBe("fn");
+  });
+});
+
+
+describe("describeTypeAsString()", () => {
+  it("Infers numeric type strings", () => {
+    expect(describeTypeAsString( NaN)).toBe("NaN"   );
+    expect(describeTypeAsString(  42)).toBe("int"   );
+    expect(describeTypeAsString(3.14)).toBe("number");
   });
 });
 
@@ -206,12 +233,15 @@ describe("when()", () => {
     expect(when(Symbol, 999, "number!")).toBe(undefined);
     expect(when(Symbol, 999, "number!", ">_<")).toBe(">_<");
   });
+
+  it("lazily and immediately evaluates then and otherwise", () => {
+    expect(when(Number, 999, "yay!")                              ).toBe("yay!");
+    expect(when(Number, null, "shouldn't happen", "oh no")        ).toBe("oh no");
+    expect(when(Number, 999, ()=>"yay!")                          ).toBe("yay!");
+    expect(when(Number, null, ()=>"shouldn't happen", ()=>"oh no")).toBe("oh no");
+  });
 });
 
-  Nullish, Int, Uint,
-  Truthy, Falsey,
-  Iterable,
-  Finite,
 
 describe("Type descriptor functions", () => {
   it("asserts and returns for Nullish()", () => {
