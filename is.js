@@ -188,7 +188,7 @@ export function is (desc, value) {
     case "iterable":
     case "iter":
     case Symbol.iterator:
-      return !(typeof value[Symbol.iterator] !== "function");
+      return !(typeof value?.[Symbol.iterator] !== "function");
   }
 
   if (typeof desc !== "function") {
