@@ -3,6 +3,7 @@ import { describe, test, it, expect } from "vitest";
 import {
   is,
   pick,
+  pickAsync,
   when,
   mustBe,
 
@@ -174,47 +175,6 @@ describe("isDescriptor", () => {
 });
 
 
-describe("pick", () => {
-  it("throws a TypeError if there isn't a descriptor argument", () => {
-    let _;
-
-    expect(() => pick()       ).toThrow(TypeError);
-    expect(() => pick(1, 2, 3)).toThrow(TypeError);
-    expect(
-      () => (_ = pick(String)),
-      `pick(String) returned a ${describeTypeS(_)}`
-    ).toThrow(TypeError);
-  });
-
-  it("returns the correct candidate from a list of immediate candidates", () => {
-    expect(
-      pick(String, 0, "Correct value!", 1),
-    ).toBe(
-      "Correct value!",
-    );
-  });
-
-  it("returns an error if no candidate is found", () => {
-    expect(() => pick(String, 1)).toThrow();
-  });
-
-  it("evaluates lazy candidates", () => {
-    expect(
-      pick(Number,
-        ( )  => { return { my_num: "25" }},
-        (o) => o.my_num,
-        parseInt,
-      ),
-    ).toBe(25);
-  });
-
-  it("returns a nullish value if no candidate is found and its the final value", () => {
-    expect(pick(String,   1, undefined)).toBe(undefined);
-    expect(pick(Function, null)        ).toBe(null);
-  });
-});
-
-
 describe("when()", () => {
   it("errors without the correct number of arguments", () => {
     expect(() => when()).toThrow();
@@ -235,10 +195,137 @@ describe("when()", () => {
   });
 
   it("lazily and immediately evaluates then and otherwise", () => {
-    expect(when(Number, 999, "yay!")                              ).toBe("yay!");
+    expect(when(Number,  999, "yay!")                              ).toBe("yay!");
     expect(when(Number, null, "shouldn't happen", "oh no")        ).toBe("oh no");
-    expect(when(Number, 999, ()=>"yay!")                          ).toBe("yay!");
+    expect(when(Number,  999, ()=>"yay!")                          ).toBe("yay!");
     expect(when(Number, null, ()=>"shouldn't happen", ()=>"oh no")).toBe("oh no");
+  });
+
+  it("throws when lazy mode is not given 2-3 arguments", () => {
+    expect(() => when(Number, () => 0, 0, 0)).toThrow();
+  });
+
+  it("returns functions which lazily check types", () => {
+    expect(when(Number, v => "yay! "+v)(999)).toBe("yay! 999");
+
+    expect(when(Number, ()=>"should happen", ()=>"oh no")(1)).toBe("should happen");
+
+    expect(when(Number, ()=>"shouldn't happen", "oh no")(null)        ).toBe("oh no");
+    expect(when(Number, ()=>"shouldn't happen", ()=>"oh no")(null)).toBe("oh no");
+  });
+});
+
+
+describe("pick() (and equivalent pickAsync)", async () => {
+  it("throws a TypeError if there isn't a descriptor argument", async () => {
+    let _;
+
+    expect(() => pick()       ).toThrow(TypeError);
+    expect(() => pick(1, 2, 3)).toThrow(TypeError);
+    expect(
+      () => (_ = pick(String)),
+      `pick(String) returned a ${describeTypeS(_)}`
+    ).toThrow(TypeError);
+
+    await expect(pickAsync()       ).rejects.toThrow(TypeError);
+    await expect(pickAsync(1, 2, 3)).rejects.toThrow(TypeError);
+    await expect(
+      async () => (_ = await pickAsync(String)),
+      `pickAsync(String) returned a ${describeTypeS(_)}`
+    ).rejects.toThrow(TypeError);
+  });
+
+  it("returns the correct candidate from a list of immediate candidates", async () => {
+    expect(
+      pick(String, 0, "Correct value!", 1),
+    ).toBe(
+      "Correct value!",
+    );
+
+    expect(
+      await pickAsync(String, 0, "Correct value!", 1),
+    ).toBe(
+      "Correct value!",
+    );
+  });
+
+  it("returns an error if no candidate is found", async () => {
+    expect(() => pick(String, 1)).toThrow();
+    await expect(async () => await pickAsync(String, 1)).rejects.toThrow();
+  });
+
+  it("evaluates lazy candidates", async () => {
+    expect(
+      pick(Number,
+        ( )  => { return { my_num: "25" }},
+        (o) => o.my_num,
+        parseInt,
+      ),
+    ).toBe(25);
+
+    expect(
+      await pickAsync(Number,
+        ( )  => { return { my_num: "25" }},
+        (o) => o.my_num,
+        parseInt,
+      ),
+    ).toBe(25);
+  });
+
+  it("returns a nullish value if no candidate is found and its the final value", async () => {
+    expect(pick(String,   1, undefined)).toBe(undefined);
+    expect(pick(Function, null)        ).toBe(null);
+    expect(await pickAsync(String,   1, undefined)).toBe(undefined);
+    expect(await pickAsync(Function,         null)).toBe(null);
+  });
+});
+
+
+describe("pickAsync()", () => {
+  it("awaits promise arguments", async () => {
+    expect(
+      await pickAsync(String,
+        Promise.resolve(1),
+        Promise.resolve("It works!"),
+        Promise.resolve("2"),
+      ),
+    ).toBe("It works!");
+  });
+
+  it("awaits promises which are the result of a lazy argument's lazy evaluation", async () => {
+    expect(
+      await pickAsync(String,
+        () => Promise.resolve(1),
+        () => Promise.resolve("It works!"),
+        () => Promise.resolve("2"),
+      ),
+    ).toBe("It works!");
+  });
+
+  it("works with when wrappers that return promises()", async () => {
+    let result = await pickAsync(BigInt,
+      async () => null,
+      when(Nullish, nl => Promise.resolve("10")                 ),
+      when(String,  st => Promise.resolve(parseFloat(st))       ),
+      when(Symbol,  sy => Promise.resolve("interfering string!")),
+      when(Number,  nu => Promise.resolve(BigInt(nu))           ),
+    );
+
+    expect(typeof result).toBe("bigint");
+    expect(result == 10 ).toBe(true);
+
+    expect(
+      result,
+      "pickAsync() return does not equal similar pick() return",
+    ).toEqual(
+      pick(BigInt,
+        () => null,
+        when(Nullish, nl => "10"                 ),
+        when(String,  st => parseFloat(st)       ),
+        when(Symbol,  sy => "interfering string!"),
+        when(Number,  nu => BigInt(nu)           ),
+      )
+    )
   });
 });
 

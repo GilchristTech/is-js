@@ -299,12 +299,72 @@ export function pick (desc, ...candidates) {
 
     } else if (is(Function, candidate)) {
       candidate = candidate(last_candidate);
+
       if (is(desc, candidate)) {
         return candidate;
+      } else if (candidate !== undefined) {
+        last_candidate = candidate;
       }
+
+    } else {
+      last_candidate = candidate;
+    }
+  }
+
+  const last_arg = candidates[candidates.length - 1];
+
+  if (last_arg == undefined) {
+    return last_arg;
+
+  } else {
+    const err = new TypeError(
+      `No candidates were a ${formatDescriptor(desc)}`
+    );
+
+    Error.captureStackTrace(err);
+    throw err;
+  }
+}
+
+
+export async function pickAsync (desc, ...candidates) {
+  if (arguments.length < 2) {
+    throw new TypeError(
+      "pickAsync() expects two or more arguments, got " + arguments.length
+    );
+
+  } else if (! isDescriptor(desc)){
+      throw new TypeError(
+        "pickAsync() expects a type descriptor as the first argument, got " +
+        describeTypeS(desc)
+      );
+  }
+
+  let last_candidate;
+
+  for (let candidate of candidates) {
+    if (candidate instanceof Promise) {
+      candidate = await candidate;
     }
 
-    last_candidate = candidate;
+    if (is(desc, candidate)) {
+      return candidate;
+
+    } else if (is(Function, candidate)) {
+      candidate = candidate(last_candidate);
+      if (candidate instanceof Promise) {
+        candidate = await candidate;
+      }
+
+      if (is(desc, candidate)) {
+        return candidate;
+      } else if (candidate !== undefined) {
+        last_candidate = candidate;
+      }
+
+    } else {
+      last_candidate = candidate;
+    }
   }
 
   const last_arg = candidates[candidates.length - 1];
@@ -326,11 +386,33 @@ export function pick (desc, ...candidates) {
 export function when (desc, value, then, otherwise) {
   if (arguments.length < 2 || arguments.length > 4) {
     throw new TypeError(
-      `when(desc, value, then, otherwise) requires 2-4 arguments, got ${arguments.length}`,
+      `when(desc, value, then, otherwise) accepts 2-4 arguments, got ${arguments.length}`,
     );
   }
 
-  if (is(desc, value)) {
+    // If the value is a function, return a function which
+    // lazily evalues `when`, instead of using it as an
+    // immediate value.
+  if (value instanceof Function) {
+    if (arguments.length > 3) {
+      throw new TypeError(
+        `when(desc, lazy_fn, otherwise) accepts 2 or 3 arguments, got ${arguments.length}`,
+      );
+    }
+
+    then      = arguments[1];
+    otherwise = arguments[2];
+
+    return function whenLazy (input) {
+      if (is(desc, input)) {
+        return then(input);
+      } else {
+        return is(Function, otherwise) ? otherwise(input) : otherwise;
+      }
+    }
+
+    // If immediate value matches...
+  } else if (is(desc, value)) {
     if (arguments.length >= 3) {
       if (is(Function, then)) { return then(value) }
       else                    { return then        }
@@ -339,6 +421,7 @@ export function when (desc, value, then, otherwise) {
       return value;
     }
 
+    // ...if immediate value does not match
   } else {
     if (arguments.length >= 4) {
       if (is(Function, otherwise)) { return otherwise(value) }

@@ -150,16 +150,46 @@ types.
 
   ### `function when (desc, value, then?, otherwise?)`
 
+  Conditionally evaluates a result based on whether a value
+  matches a type descriptor. `when` has two forms: an immediate
+  form which checks the type of `value` immediately, and a lazy
+  form which returns a function that performs the evaluation when
+  called with an input parameter. When `value` is a function, the
+  lazy form is used, and when it is not a function the immediate
+  form is used.
+
+  In both forms, `when` is intended to be useful when chaining
+  nullish coalescing operations (`??`) between `when` calls, or
+  being combined with `pick` and `pickAsync`. Here's an example
+  of a function which uses this approach with `when`'s lazy form
+  to accept many data types:
+
+  ```javascript
+    async function getSomeArray (get_from) {
+      return await pickAsync(String
+        mustBe(
+          [ null, URL, Response, Blob, String, Array ],
+          get_from,
+        ),
+
+        when(null,     ()  => new URL("./file.json")        ),
+        when(URL,      url => fetch(url)                    ),
+        when(Response, res => res.text()                    ),
+        when(String,   str => mustBe(Array, JSON.parse(str))),
+      );
+    }
+  ```
+
+  #### Immediate form: `function when(desc, value, then?, otherwise?) -> result`
+
   Returns `value` if `is(desc, value)`, otherwise returns
   `undefined`.
 
-  If `then` or `otherwise` are defined, those values are used in
-  place of `value`. If the respective argument is a function, it
-  is lazily called with `value` as a parameter, and the result is
-  returned by `when`.
-
-  This function is recommended for use with nullish coalescing
-  and `pick()`.
+  If the `then` or `otherwise` arguments are provided, those
+  values are used in place of `value` as an immediate value. If
+  the respective argument is a function, it is instead lazily
+  called with `value` as a parameter, and the result is returned
+  by `when`.
 
   Example:
 
@@ -175,13 +205,23 @@ types.
   const date = is(Date, value) ? value : new Date();
   ```
 
+  #### Lazy form: `function when(desc, then, otherwise?) -> ((value) => result)`
+
+  The lazy form of `when` is used when the second argument is a
+  function. This changes the return from the resolved value of
+  `then` or `otherwise` to a lazy function which returns the
+  value, based on whether its parameter matches `desc`.
+
+  Like the immediate form, `then` and `otherwise` can be lazy or
+  immediate values.
+
   ### `function pick (desc, ...candidates)`
 
   Pick the first candidate (evaluating from left to right), which
   matches the type descriptor. Each non-function argument is used
   as an immediate value. If candidates are functions, they are
-  lazily called with the value of the previous candidate as an
-  argument.
+  lazily called with the last non-nullish value of a previous
+  candidate as an argument, or undefined, if none exists).
 
   Throws a TypeError if no candidate was found, unless the final
   argument is an immediate nullish value, in which case it is returned.
